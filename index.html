@@ -1,0 +1,2585 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>✧ 塔羅占卜 ✧</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Noto+Serif+TC:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        :root {
+            --bg-deep: #06060f;
+            --bg-primary: #0b0b1a;
+            --bg-card: #111128;
+            --gold: #c9a84c;
+            --gold-light: #e8d5a3;
+            --gold-dim: rgba(201,168,76,0.25);
+            --purple: #6b5ce7;
+            --purple-dim: rgba(107,92,231,0.2);
+            --text: #e8e6e3;
+            --text-dim: #8a8698;
+            --card-back-1: #1a0a3e;
+            --card-back-2: #0d0d2b;
+            --danger: #e74c3c;
+        }
+        html.dark {
+            color-scheme: dark;
+        }
+        html:not(.dark) {
+            --bg-deep: #ece4d4;
+            --bg-primary: #f5f0e8;
+            --bg-card: #e8e0d0;
+            --gold: #8b6914;
+            --gold-light: #6b5010;
+            --gold-dim: rgba(139,105,20,0.2);
+            --purple: #5a4bbf;
+            --purple-dim: rgba(90,75,191,0.15);
+            --text: #2c1810;
+            --text-dim: #7a6b60;
+            --card-back-1: #3a2a5e;
+            --card-back-2: #2d2050;
+            --danger: #c0392b;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Noto Serif TC', serif;
+            background: var(--bg-deep);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+        /* ─── Starfield ─── */
+        #stars-container {
+            position: fixed; inset: 0; z-index: 0;
+            pointer-events: none; overflow: hidden;
+        }
+        .star {
+            position: absolute;
+            border-radius: 50%;
+            background: var(--gold-light);
+            animation: twinkle var(--dur) ease-in-out infinite;
+            opacity: 0;
+        }
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.1; }
+            50% { opacity: var(--peak); }
+        }
+        /* ─── Nebula background ─── */
+        #nebula {
+            position: fixed; inset: 0; z-index: 0;
+            pointer-events: none;
+            background:
+                radial-gradient(ellipse at 15% 85%, var(--purple-dim) 0%, transparent 55%),
+                radial-gradient(ellipse at 85% 15%, var(--gold-dim) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(107,92,231,0.06) 0%, transparent 70%);
+            animation: nebulaShift 30s ease-in-out infinite alternate;
+        }
+        @keyframes nebulaShift {
+            0% { opacity: 1; }
+            100% { opacity: 0.6; transform: scale(1.05); }
+        }
+        /* ─── Main container ─── */
+        #app {
+            position: relative; z-index: 1;
+            min-height: 100vh;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            width: 100%;
+            max-width: 700px;
+            padding: 24px 20px;
+            min-height: 100vh;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        .screen.active {
+            display: flex;
+            opacity: 1;
+            transform: translateY(0);
+        }
+        /* ─── Typography ─── */
+        .title-en {
+            font-family: 'Cinzel', serif;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+        }
+        .title-cn {
+            font-family: 'Noto Serif TC', serif;
+        }
+        .logo {
+            font-family: 'Cinzel', serif;
+            font-size: clamp(28px, 6vw, 42px);
+            font-weight: 700;
+            color: var(--gold);
+            letter-spacing: 0.2em;
+            text-shadow: 0 0 30px var(--gold-dim);
+        }
+        .logo-sub {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: clamp(12px, 2.5vw, 16px);
+            color: var(--text-dim);
+            letter-spacing: 0.4em;
+            margin-top: 6px;
+        }
+        .divider {
+            display: flex; align-items: center; gap: 16px;
+            margin: 20px 0;
+            width: 80%;
+            max-width: 320px;
+        }
+        .divider::before, .divider::after {
+            content: ''; flex: 1; height: 1px;
+            background: linear-gradient(90deg, transparent, var(--gold-dim), transparent);
+        }
+        .divider-sym {
+            color: var(--gold);
+            font-size: 12px;
+            opacity: 0.7;
+        }
+        /* ─── Breathing circle ─── */
+        .breath-wrap {
+            position: relative;
+            width: 180px; height: 180px;
+            margin: 30px 0;
+        }
+        .breath-ring {
+            position: absolute; inset: 0;
+            border-radius: 50%;
+            border: 2px solid var(--gold);
+            opacity: 0.3;
+            animation: breatheRing 8s ease-in-out infinite;
+        }
+        .breath-ring:nth-child(2) { animation-delay: -2.5s; border-style: dashed; }
+        .breath-ring:nth-child(3) { animation-delay: -5s; border-width: 1px; }
+        .breath-core {
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 80px; height: 80px;
+            transform: translate(-50%,-50%);
+            border-radius: 50%;
+            background: radial-gradient(circle, var(--gold-dim), transparent 70%);
+            animation: breatheCore 8s ease-in-out infinite;
+        }
+        .breath-text {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%,-50%);
+            font-size: 15px;
+            color: var(--gold);
+            white-space: nowrap;
+            font-weight: 600;
+        }
+        @keyframes breatheRing {
+            0%, 100% { transform: scale(0.8); opacity: 0.15; }
+            50% { transform: scale(1.15); opacity: 0.5; }
+        }
+        @keyframes breatheCore {
+            0%, 100% { transform: translate(-50%,-50%) scale(0.7); opacity: 0.4; }
+            50% { transform: translate(-50%,-50%) scale(1.3); opacity: 0.9; }
+        }
+        /* ─── Buttons ─── */
+        .btn {
+            font-family: 'Noto Serif TC', serif;
+            font-size: 17px;
+            padding: 14px 40px;
+            border: 2px solid var(--gold);
+            background: transparent;
+            color: var(--gold);
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.35s ease;
+            letter-spacing: 0.1em;
+            position: relative;
+            overflow: hidden;
+        }
+        .btn:hover {
+            background: var(--gold);
+            color: var(--bg-deep);
+            box-shadow: 0 0 30px var(--gold-dim), 0 0 60px rgba(201,168,76,0.1);
+        }
+        .btn:active { transform: scale(0.97); }
+        .btn-primary {
+            background: var(--gold);
+            color: var(--bg-deep);
+            font-weight: 600;
+        }
+        .btn-primary:hover {
+            background: var(--gold-light);
+            box-shadow: 0 0 40px var(--gold-dim);
+        }
+        .btn-sm {
+            font-size: 15px;
+            padding: 10px 28px;
+        }
+        /* ─── Instruction text ─── */
+        .instruction {
+            font-size: 16px;
+            line-height: 1.9;
+            color: var(--text-dim);
+            max-width: 420px;
+        }
+        .instruction strong { color: var(--text); }
+        /* ─── Question input ─── */
+        .question-area {
+            width: 100%;
+            max-width: 480px;
+            margin: 24px 0;
+        }
+        .question-area textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 16px 20px;
+            font-family: 'Noto Serif TC', serif;
+            font-size: 17px;
+            line-height: 1.7;
+            color: var(--text);
+            background: rgba(255,255,255,0.04);
+            border: 1.5px solid var(--gold-dim);
+            border-radius: 12px;
+            resize: vertical;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        .question-area textarea::placeholder { color: var(--text-dim); opacity: 0.6; }
+        .question-area textarea:focus { border-color: var(--gold); }
+        /* ─── Method cards ─── */
+        .method-grid {
+            display: flex; gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 24px 0;
+            width: 100%;
+        }
+        .method-card {
+            flex: 1;
+            min-width: 200px;
+            max-width: 280px;
+            padding: 28px 20px;
+            border: 1.5px solid var(--gold-dim);
+            border-radius: 16px;
+            background: rgba(255,255,255,0.02);
+            cursor: pointer;
+            transition: all 0.35s ease;
+            text-align: center;
+        }
+        .method-card:hover {
+            border-color: var(--gold);
+            background: rgba(201,168,76,0.06);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(201,168,76,0.1);
+        }
+        .method-card i {
+            font-size: 32px;
+            color: var(--gold);
+            margin-bottom: 14px;
+        }
+        .method-card h3 {
+            font-size: 18px;
+            margin-bottom: 8px;
+            color: var(--text);
+        }
+        .method-card p {
+            font-size: 14px;
+            color: var(--text-dim);
+            line-height: 1.6;
+        }
+        /* ─── Number input ─── */
+        .number-inputs {
+            display: flex; gap: 16px;
+            justify-content: center;
+            margin: 24px 0;
+            flex-wrap: wrap;
+        }
+        .num-field {
+            display: flex; flex-direction: column; align-items: center; gap: 8px;
+        }
+        .num-field label {
+            font-size: 14px;
+            color: var(--text-dim);
+        }
+        .num-field input {
+            width: 80px;
+            padding: 12px;
+            font-family: 'Cinzel', serif;
+            font-size: 22px;
+            text-align: center;
+            color: var(--gold);
+            background: rgba(255,255,255,0.04);
+            border: 1.5px solid var(--gold-dim);
+            border-radius: 10px;
+            outline: none;
+            transition: border-color 0.3s;
+            -moz-appearance: textfield;
+        }
+        .num-field input::-webkit-outer-spin-button,
+        .num-field input::-webkit-inner-spin-button {
+            -webkit-appearance: none; margin: 0;
+        }
+        .num-field input:focus { border-color: var(--gold); }
+        .error-msg {
+            color: var(--danger);
+            font-size: 14px;
+            min-height: 20px;
+            margin: 4px 0;
+        }
+        /* ─── Tarot cards ─── */
+        .spread {
+            display: flex;
+            gap: clamp(12px, 3vw, 24px);
+            justify-content: center;
+            align-items: flex-start;
+            margin: 28px 0;
+            perspective: 1000px;
+        }
+        .card-slot {
+            display: flex; flex-direction: column; align-items: center; gap: 10px;
+        }
+        .card-slot .position-label {
+            font-size: 13px;
+            color: var(--text-dim);
+            letter-spacing: 0.15em;
+        }
+        .tarot-card {
+            width: clamp(100px, 26vw, 140px);
+            height: clamp(155px, 40vw, 210px);
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.9s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: default;
+        }
+        .tarot-card.flipped { transform: rotateY(180deg); }
+        .tarot-card.entrance {
+            animation: cardEntrance 0.6s ease-out backwards;
+        }
+        @keyframes cardEntrance {
+            from { opacity: 0; transform: translateY(60px) scale(0.8); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .card-face {
+            position: absolute; inset: 0;
+            border-radius: 10px;
+            backface-visibility: hidden;
+            overflow: hidden;
+        }
+        /* Card back */
+        .card-back {
+            background:
+                repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(201,168,76,0.07) 8px, rgba(201,168,76,0.07) 9px),
+                repeating-linear-gradient(-45deg, transparent, transparent 8px, rgba(201,168,76,0.07) 8px, rgba(201,168,76,0.07) 9px),
+                linear-gradient(160deg, var(--card-back-1), var(--card-back-2), var(--card-back-1));
+            border: 2px solid var(--gold-dim);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .card-back-inner {
+            width: calc(100% - 16px);
+            height: calc(100% - 16px);
+            border: 1px solid rgba(201,168,76,0.25);
+            border-radius: 6px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .card-back-sym {
+            font-size: clamp(28px, 8vw, 40px);
+            color: var(--gold);
+            opacity: 0.4;
+            font-family: 'Cinzel', serif;
+            text-shadow: 0 0 20px var(--gold-dim);
+        }
+        /* Card front */
+        .card-front {
+            transform: rotateY(180deg);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: space-between;
+            padding: clamp(8px, 2vw, 14px);
+            border: 2px solid var(--gold-dim);
+        }
+        .card-front .card-numeral {
+            font-family: 'Cinzel', serif;
+            font-size: clamp(11px, 2.5vw, 14px);
+            color: var(--gold);
+            letter-spacing: 0.15em;
+            font-weight: 600;
+        }
+        .card-front .card-icon {
+            font-size: clamp(26px, 7vw, 38px);
+            opacity: 0.9;
+            margin: 4px 0;
+        }
+        .card-front .card-icon.reversed { transform: rotate(180deg); }
+        .card-front .card-name-cn {
+            font-size: clamp(13px, 3vw, 16px);
+            font-weight: 700;
+            line-height: 1.3;
+        }
+        .card-front .card-name-en {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: clamp(9px, 2vw, 11px);
+            color: var(--text-dim);
+            font-style: italic;
+        }
+        .card-front .card-keywords {
+            font-size: clamp(8px, 1.8vw, 10px);
+            color: var(--text-dim);
+            letter-spacing: 0.05em;
+        }
+        .card-front .orientation-badge {
+            font-size: clamp(8px, 1.8vw, 10px);
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+        .orientation-badge.upright {
+            background: rgba(74, 189, 110, 0.15);
+            color: #4abd6e;
+        }
+        .orientation-badge.reversed-badge {
+            background: rgba(231, 76, 60, 0.15);
+            color: #e74c3c;
+        }
+        /* ─── Suit color themes ─── */
+        .suit-major { --suit: #c9a84c; }
+        .suit-wands { --suit: #e8622c; }
+        .suit-cups { --suit: #4a9bd9; }
+        .suit-swords { --suit: #a0b0c0; }
+        .suit-pentacles { --suit: #4abd6e; }
+        .card-front.suit-major { background: linear-gradient(170deg, #1c1435, #0f0e22, #1a1230); }
+        .card-front.suit-wands { background: linear-gradient(170deg, #2d1810, #1a0e0a, #2d1810); }
+        .card-front.suit-cups { background: linear-gradient(170deg, #0d1a2d, #0a1220, #0d1a2d); }
+        .card-front.suit-swords { background: linear-gradient(170deg, #1a1d25, #12141a, #1a1d25); }
+        .card-front.suit-pentacles { background: linear-gradient(170deg, #0d2d1a, #0a1a10, #0d2d1a); }
+        html:not(.dark) .card-front.suit-major { background: linear-gradient(170deg, #f0e8d8, #e8dcc8, #f0e8d8); }
+        html:not(.dark) .card-front.suit-wands { background: linear-gradient(170deg, #f5e8e0, #eddcd0, #f5e8e0); }
+        html:not(.dark) .card-front.suit-cups { background: linear-gradient(170deg, #e0ecf5, #d5e3ed, #e0ecf5); }
+        html:not(.dark) .card-front.suit-swords { background: linear-gradient(170deg, #e8eaef, #dde0e5, #e8eaef); }
+        html:not(.dark) .card-front.suit-pentacles { background: linear-gradient(170deg, #e0f0e8, #d5e8dc, #e0f0e8); }
+        .card-front .card-icon { color: var(--suit); }
+        .card-front .card-numeral { color: var(--suit); }
+        /* ─── Shuffle animation ─── */
+        .shuffle-container {
+            position: relative;
+            width: 140px; height: 200px;
+            margin: 30px auto;
+        }
+        .shuffle-card {
+            position: absolute;
+            width: 100%; height: 100%;
+            border-radius: 10px;
+            background:
+                repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(201,168,76,0.07) 8px, rgba(201,168,76,0.07) 9px),
+                linear-gradient(160deg, var(--card-back-1), var(--card-back-2));
+            border: 2px solid var(--gold-dim);
+        }
+        .shuffle-card:nth-child(1) { animation: shuffle1 1.2s ease-in-out infinite; }
+        .shuffle-card:nth-child(2) { animation: shuffle2 1.2s ease-in-out infinite 0.15s; }
+        .shuffle-card:nth-child(3) { animation: shuffle3 1.2s ease-in-out infinite 0.3s; }
+        @keyframes shuffle1 {
+            0%, 100% { transform: translateX(0) rotate(0deg); }
+            50% { transform: translateX(-30px) rotate(-8deg); }
+        }
+        @keyframes shuffle2 {
+            0%, 100% { transform: translateX(0) rotate(0deg); }
+            50% { transform: translateX(0) rotate(2deg) translateY(-10px); }
+        }
+        @keyframes shuffle3 {
+            0%, 100% { transform: translateX(0) rotate(0deg); }
+            50% { transform: translateX(30px) rotate(8deg); }
+        }
+        /* ─── Reading section ─── */
+        .reading-container {
+            width: 100%;
+            max-width: 640px;
+            text-align: left;
+        }
+        .reading-cards-mini {
+            display: flex; gap: 12px;
+            justify-content: center;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+        .mini-card {
+            padding: 8px 14px;
+            border: 1px solid var(--gold-dim);
+            border-radius: 8px;
+            background: rgba(255,255,255,0.03);
+            font-size: 13px;
+            color: var(--gold);
+            text-align: center;
+        }
+        .mini-card .mini-pos {
+            font-size: 10px;
+            color: var(--text-dim);
+            display: block;
+            margin-bottom: 2px;
+        }
+        .reading-content {
+            line-height: 1.9;
+            font-size: 16px;
+            padding: 20px 0;
+        }
+        .reading-content h1, .reading-content h2, .reading-content h3 {
+            color: var(--gold);
+            margin: 20px 0 10px;
+            font-weight: 600;
+        }
+        .reading-content h1 { font-size: 22px; }
+        .reading-content h2 { font-size: 19px; }
+        .reading-content h3 { font-size: 17px; }
+        .reading-content p { margin: 10px 0; }
+        .reading-content strong { color: var(--gold-light); }
+        .reading-content ul, .reading-content ol {
+            padding-left: 24px; margin: 10px 0;
+        }
+        .reading-content li { margin: 6px 0; }
+        .reading-content blockquote {
+            border-left: 3px solid var(--gold-dim);
+            padding-left: 16px;
+            color: var(--text-dim);
+            font-style: italic;
+            margin: 14px 0;
+        }
+        .reading-content hr {
+            border: none;
+            border-top: 1px solid var(--gold-dim);
+            margin: 20px 0;
+        }
+        html:not(.dark) .reading-content strong { color: var(--gold); }
+
+        .followup-section {
+            margin: 8px 0 8px;
+            text-align: center;
+        }
+        .followup-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: stretch;
+            max-width: 520px;
+            margin: 0 auto;
+        }
+        .followup-btn {
+            font-family: 'Noto Serif TC', serif;
+            font-size: 15px;
+            line-height: 1.65;
+            padding: 12px 22px;
+            border: 1.5px solid var(--gold);
+            background: transparent;
+            color: var(--gold);
+            border-radius: 50px;
+            cursor: pointer;
+            letter-spacing: 0.04em;
+            white-space: normal;
+            text-align: center;
+            transition: all 0.35s ease;
+        }
+        .followup-btn:hover {
+            background: var(--gold);
+            color: var(--bg-deep);
+            box-shadow: 0 0 24px var(--gold-dim);
+        }
+        .followup-btn:active { transform: scale(0.98); }
+        .followup-btn:disabled {
+            opacity: 0.55;
+            cursor: default;
+            box-shadow: none;
+        }
+        .followup-asked {
+            display: none;
+            margin: 18px 0 8px;
+            font-size: 16px;
+            color: var(--gold);
+            letter-spacing: 0.04em;
+            line-height: 1.7;
+        }
+        .followup-loader {
+            display: none;
+            margin: 12px 0 8px;
+            font-size: 14px;
+            color: var(--text-dim);
+            letter-spacing: 0.06em;
+        }
+        .followup-welcome {
+            display: none;
+            margin: 22px 0 0;
+            font-size: 15px;
+            color: var(--text-dim);
+            letter-spacing: 0.06em;
+            line-height: 1.8;
+        }
+        /* ─── Loading dots ─── */
+        .loading-dots {
+            display: inline-flex; gap: 6px;
+            align-items: center;
+            padding: 20px 0;
+        }
+        .loading-dots span {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: var(--gold);
+            animation: dotPulse 1.2s ease-in-out infinite;
+        }
+        .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes dotPulse {
+            0%, 100% { opacity: 0.2; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+        /* ─── Custom modal ─── */
+        .modal-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.6);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 100;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .modal-overlay.show { opacity: 1; }
+        .modal-box {
+            background: var(--bg-card);
+            border: 1px solid var(--gold-dim);
+            border-radius: 16px;
+            padding: 28px;
+            max-width: 360px;
+            width: 90%;
+            text-align: center;
+        }
+        .modal-box p { margin-bottom: 20px; font-size: 15px; line-height: 1.7; }
+        .modal-actions { display: flex; gap: 12px; justify-content: center; }
+        /* ─── Scrollbar ─── */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--gold-dim); border-radius: 3px; }
+        /* ─── Fade helpers ─── */
+        .fade-in { animation: fadeIn 0.6s ease forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        .delay-1 { animation-delay: 0.15s; }
+        .delay-2 { animation-delay: 0.3s; }
+        .delay-3 { animation-delay: 0.45s; }
+        .delay-4 { animation-delay: 0.6s; }
+        /* ─── Fortune date ─── */
+        .fortune-date {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 15px;
+            color: var(--gold);
+            letter-spacing: 0.12em;
+            margin: 6px 0 4px;
+            opacity: 0.75;
+        }
+        .mode-icon-wrap {
+            width: 64px; height: 64px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 14px;
+            font-size: 26px;
+        }
+        .mode-icon-wrap.tarot-icon {
+            background: linear-gradient(135deg, rgba(107,92,231,0.2), rgba(107,92,231,0.05));
+            color: var(--purple);
+            border: 1.5px solid rgba(107,92,231,0.3);
+        }
+        .mode-icon-wrap.daily-icon {
+            background: linear-gradient(135deg, rgba(201,168,76,0.2), rgba(201,168,76,0.05));
+            color: var(--gold);
+            border: 1.5px solid var(--gold-dim);
+        }
+        .mode-icon-wrap.weekly-icon {
+            background: linear-gradient(135deg, rgba(74,155,217,0.2), rgba(74,155,217,0.05));
+            color: #4a9bd9;
+            border: 1.5px solid rgba(74,155,217,0.3);
+        }
+        /* ─── Mode grid (3-col) ─── */
+        .mode-grid .method-card {
+            min-width: 155px;
+            max-width: 200px;
+            padding: 22px 14px;
+        }
+        .mode-grid .method-card h3 { font-size: 17px; }
+        .mode-grid .method-card p { font-size: 13px; }
+        /* ─── Pick-your-own cards ─── */
+        .pick-counter {
+            font-size: 15px;
+            color: var(--text-dim);
+            margin: 6px 0;
+        }
+        .pick-counter strong {
+            color: var(--gold);
+            font-family: 'Cinzel', serif;
+            font-size: 20px;
+        }
+        .pick-auto-btn {
+            font-family: 'Noto Serif TC', serif;
+            font-size: 14px;
+            padding: 8px 22px;
+            background: transparent;
+            border: 1px solid var(--text-dim);
+            color: var(--text-dim);
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 6px 0 10px;
+        }
+        .pick-auto-btn:hover {
+            border-color: var(--gold);
+            color: var(--gold);
+        }
+        .pick-scroll-hint {
+            font-size: 13px;
+            color: var(--text-dim);
+            margin: 2px 0 4px;
+            opacity: 0.7;
+        }
+        .pick-scroll-wrap {
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+        .pick-scroll-wrap::before,
+        .pick-scroll-wrap::after {
+            content: '';
+            position: absolute;
+            top: 0; bottom: 0; width: 40px;
+            z-index: 3;
+            pointer-events: none;
+        }
+        .pick-scroll-wrap::before {
+            left: 0;
+            background: linear-gradient(to right, var(--bg-deep), transparent);
+        }
+        .pick-scroll-wrap::after {
+            right: 0;
+            background: linear-gradient(to left, var(--bg-deep), transparent);
+        }
+        .pick-grid {
+            display: flex;
+            overflow-x: auto;
+            overflow-y: visible;
+            -webkit-overflow-scrolling: touch;
+            padding: 30px 50px 24px;
+            margin: 0;
+            width: 100%;
+            align-items: flex-end;
+            scrollbar-width: none;
+            cursor: grab;
+        }
+        .pick-grid:active { cursor: grabbing; }
+        .pick-grid::-webkit-scrollbar { display: none; }
+        .pick-card {
+            flex: 0 0 auto;
+            width: clamp(50px, 13vw, 62px);
+            height: clamp(75px, 19.5vw, 93px);
+            margin-left: clamp(-32px, -7.5vw, -22px);
+            border-radius: 7px;
+            background:
+                repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(201,168,76,0.06) 5px, rgba(201,168,76,0.06) 6px),
+                repeating-linear-gradient(-45deg, transparent, transparent 5px, rgba(201,168,76,0.06) 5px, rgba(201,168,76,0.06) 6px),
+                linear-gradient(160deg, var(--card-back-1), var(--card-back-2), var(--card-back-1));
+            border: 1.5px solid var(--gold-dim);
+            cursor: pointer;
+            transition: transform 0.35s cubic-bezier(.34,1.56,.64,1), border-color 0.3s, box-shadow 0.3s, z-index 0s;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: pickEntrance 0.4s ease-out backwards;
+        }
+        .pick-card:first-child { margin-left: 0; }
+        .pick-card:hover {
+            border-color: rgba(201,168,76,0.5);
+            transform: translateY(-14px) scale(1.04);
+            z-index: 5;
+        }
+        .pick-card.selected {
+            border-color: var(--gold);
+            box-shadow: 0 0 22px var(--gold-dim), 0 8px 20px rgba(0,0,0,0.35);
+            transform: translateY(-28px) scale(1.08);
+            z-index: 10;
+        }
+        .pick-sym {
+            color: var(--gold);
+            opacity: 0.3;
+            font-size: clamp(12px, 3.5vw, 16px);
+            font-family: 'Cinzel', serif;
+            pointer-events: none;
+        }
+        .pick-badge {
+            position: absolute;
+            top: -10px; right: -6px;
+            width: 22px; height: 22px;
+            border-radius: 50%;
+            background: var(--gold);
+            color: var(--bg-deep);
+            font-size: 12px;
+            font-weight: 700;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Cinzel', serif;
+            pointer-events: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        }
+        .pick-card.selected .pick-badge { display: flex; }
+        @keyframes pickEntrance {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        /* ─── Loading ring ─── */
+        .loading-ring-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 50px 0;
+        }
+        .loading-ring {
+            position: relative;
+            width: 130px; height: 130px;
+        }
+        .loading-ring svg {
+            transform: rotate(-90deg);
+            width: 130px; height: 130px;
+        }
+        .loading-ring-bg {
+            fill: none;
+            stroke: var(--gold-dim);
+            stroke-width: 5;
+        }
+        .loading-ring-fill {
+            fill: none;
+            stroke: var(--gold);
+            stroke-width: 5;
+            stroke-linecap: round;
+            stroke-dasharray: 377;
+            stroke-dashoffset: 377;
+            transition: stroke-dashoffset 0.4s ease;
+            filter: drop-shadow(0 0 6px rgba(201,168,76,0.4));
+        }
+        .loading-ring-pct {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Cinzel', serif;
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--gold);
+        }
+        .loading-ring-label {
+            margin-top: 18px;
+            font-size: 14px;
+            color: var(--text-dim);
+            letter-spacing: 0.08em;
+            animation: pulseText 2s ease-in-out infinite;
+        }
+        @keyframes pulseText {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+        /* ─── Zodiac grid ─── */
+        .zodiac-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            width: 100%;
+            max-width: 480px;
+            margin: 20px 0;
+        }
+        .zodiac-item {
+            padding: 14px 6px;
+            border: 1.5px solid var(--gold-dim);
+            border-radius: 12px;
+            background: rgba(255,255,255,0.02);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        .zodiac-item:hover, .zodiac-item:active {
+            border-color: var(--gold);
+            background: rgba(201,168,76,0.08);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(201,168,76,0.12);
+        }
+        .zodiac-sym { font-size: 26px; display: block; margin-bottom: 4px; }
+        .zodiac-name { font-size: 14px; font-weight: 600; color: var(--text); }
+        .zodiac-dates { font-size: 10px; color: var(--text-dim); margin-top: 3px; display: block; }
+
+        /* ─── Settings ─── */
+        .settings-btn {
+            position: fixed;
+            top: 16px; right: 16px;
+            z-index: 8;
+            width: 42px; height: 42px;
+            border: 1.5px solid var(--gold-dim);
+            background: rgba(255,255,255,0.04);
+            color: var(--gold);
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.3s ease;
+        }
+        .settings-btn:hover {
+            border-color: var(--gold);
+            background: rgba(201,168,76,0.1);
+            box-shadow: 0 0 18px var(--gold-dim);
+        }
+        .settings-form {
+            width: 100%;
+            max-width: 480px;
+            text-align: left;
+            margin: 8px 0 20px;
+        }
+        .settings-field { margin: 16px 0; }
+        .settings-field label {
+            display: block;
+            font-size: 13px;
+            color: var(--text-dim);
+            letter-spacing: 0.08em;
+            margin-bottom: 8px;
+        }
+        .settings-field input,
+        .settings-field select {
+            width: 100%;
+            padding: 12px 16px;
+            font-family: 'Noto Serif TC', serif;
+            font-size: 16px;
+            color: var(--text);
+            background: rgba(255,255,255,0.04);
+            border: 1.5px solid var(--gold-dim);
+            border-radius: 12px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        .settings-field input:focus,
+        .settings-field select:focus { border-color: var(--gold); }
+        .settings-field select { cursor: pointer; }
+        .settings-key-row { position: relative; }
+        .settings-key-row input { padding-right: 48px; }
+        .settings-eye {
+            position: absolute;
+            right: 12px; top: 50%;
+            transform: translateY(-50%);
+            background: none; border: none;
+            color: var(--text-dim);
+            cursor: pointer;
+            font-size: 16px;
+            padding: 4px;
+        }
+        .settings-eye:hover { color: var(--gold); }
+        .settings-hint {
+            font-size: 13px;
+            line-height: 1.7;
+            color: var(--text-dim);
+            margin: 8px 0 20px;
+        }
+        .settings-status {
+            font-size: 14px;
+            min-height: 22px;
+            margin: 4px 0 12px;
+            color: var(--gold);
+        }
+        .settings-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 8px;
+        }
+        .api-ready-dot {
+            display: inline-block;
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            background: #4abd6e;
+            box-shadow: 0 0 8px rgba(74,189,110,0.6);
+            margin-right: 6px;
+            vertical-align: middle;
+        }
+        .settings-link {
+            background: none; border: none;
+            color: var(--gold);
+            cursor: pointer;
+            font-family: 'Noto Serif TC', serif;
+            font-size: 14px;
+            text-decoration: underline;
+            padding: 0;
+        }
+        /* ─── Responsive ─── */
+        @media (max-width: 540px) {
+            .zodiac-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+        @media (max-width: 480px) {
+            .method-grid { flex-direction: column; align-items: center; }
+            .method-card { max-width: 100%; }
+            .mode-grid { flex-direction: row !important; flex-wrap: wrap; }
+            .mode-grid .method-card { min-width: 140px; max-width: 46%; flex: 0 0 auto; }
+            .spread { gap: 8px; }
+        }
+        @media (max-width: 380px) {
+            .zodiac-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+            .zodiac-item { padding: 10px 4px; }
+            .zodiac-sym { font-size: 22px; }
+            .zodiac-name { font-size: 13px; }
+        }
+    </style>
+</head>
+<body>
+    <div id="nebula"></div>
+    <div id="stars-container"></div>
+    <div id="app">
+        <button type="button" class="settings-btn" id="btn-settings" onclick="openSettings()" title="API 設定" aria-label="API 設定">
+            <i class="fa-solid fa-gear"></i>
+        </button>
+
+
+
+        <!-- ═══ SCREEN 1: Meditation ═══ -->
+        <div class="screen active" id="screen-meditate">
+            <div class="logo">✧ 塔羅占卜 ✧</div>
+            <div class="logo-sub">TAROT DIVINATION</div>
+
+            <div class="divider"><span class="divider-sym">☽</span></div>
+
+            <div class="breath-wrap">
+                <div class="breath-ring"></div>
+                <div class="breath-ring"></div>
+                <div class="breath-ring"></div>
+                <div class="breath-core"></div>
+                <div class="breath-text" id="breath-label">吸氣...</div>
+            </div>
+
+            <p class="instruction" style="margin-bottom: 28px;">
+                閉上眼睛，靜下心來<br>
+                在心中<strong>默念你的問題三次</strong><br>
+                讓思緒隨呼吸沉澱...
+            </p>
+
+            <button class="btn btn-primary" onclick="goToScreen('screen-mode')">
+                開始占卜
+            </button>
+        </div>
+
+        <!-- ═══ SCREEN 1b: Mode Selection ═══ -->
+        <div class="screen" id="screen-mode">
+            <div class="logo" style="font-size: clamp(22px,5vw,32px);">✧</div>
+            <h2 class="title-cn" style="font-size: clamp(20px,4.5vw,26px); margin: 12px 0;">選擇占卜類型</h2>
+            <p class="instruction" style="margin-bottom: 8px;">
+                你今天想要哪種指引？
+            </p>
+
+            <div class="method-grid mode-grid">
+                <div class="method-card" onclick="chooseMode('tarot')">
+                    <div class="mode-icon-wrap tarot-icon"><i class="fa-solid fa-eye"></i></div>
+                    <h3>塔羅占卜</h3>
+                    <p>針對心中的疑問<br>讓塔羅牌指引方向</p>
+                </div>
+                <div class="method-card" onclick="chooseMode('daily')">
+                    <div class="mode-icon-wrap daily-icon"><i class="fa-solid fa-sun"></i></div>
+                    <h3>今日運程</h3>
+                    <p>探索今天的運勢<br>愛情與事業能量</p>
+                </div>
+                <div class="method-card" onclick="chooseMode('weekly')">
+                    <div class="mode-icon-wrap weekly-icon"><i class="fa-solid fa-star-half-stroke"></i></div>
+                    <h3>本週星座運</h3>
+                    <p>選擇你的星座<br>看看本週運勢走向</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ SCREEN 1c: Zodiac Selection ═══ -->
+        <div class="screen" id="screen-zodiac">
+            <div class="logo" style="font-size: clamp(22px,5vw,32px);">✧</div>
+            <h2 class="title-cn" style="font-size: clamp(20px,4.5vw,26px); margin: 12px 0;">選擇你的星座</h2>
+            <div class="fortune-date" id="zodiac-week-label"></div>
+
+            <div class="zodiac-grid" id="zodiac-grid"></div>
+        </div>
+
+        <!-- ═══ SCREEN 2: Question ═══ -->
+        <div class="screen" id="screen-question">
+            <div class="logo" style="font-size: clamp(22px,5vw,32px);">✧</div>
+            <h2 class="title-cn" style="font-size: clamp(20px,4.5vw,26px); margin: 12px 0;">你想問什麼？</h2>
+            <p class="instruction" style="margin-bottom: 4px;">
+                將你心中的疑問寫下來<br>
+                越具體，牌的指引越清晰
+            </p>
+
+            <div class="question-area">
+                <textarea id="question-input" placeholder="例如：我的感情接下來會如何發展？&#10;我是否應該換工作？"></textarea>
+            </div>
+
+            <button class="btn btn-primary" id="btn-to-method" onclick="submitQuestion()">
+                繼續
+            </button>
+            <div class="error-msg" id="question-error"></div>
+        </div>
+
+        <!-- ═══ SCREEN 3: Method Selection ═══ -->
+        <div class="screen" id="screen-method">
+            <div class="logo" style="font-size: clamp(22px,5vw,32px);">✧</div>
+            <h2 class="title-cn" style="font-size: clamp(20px,4.5vw,26px); margin: 12px 0;">選擇抽牌方式</h2>
+            <p class="instruction" style="margin-bottom: 8px;">
+                請選擇你偏好的方式
+            </p>
+
+            <div class="method-grid mode-grid">
+                <div class="method-card" onclick="chooseMethod('random')">
+                    <i class="fa-solid fa-shuffle" style="font-size:28px;color:var(--gold);margin-bottom:12px;"></i>
+                    <h3>隨機抽牌</h3>
+                    <p>讓命運為你抽出三張牌<br>交由直覺引導</p>
+                </div>
+                <div class="method-card" onclick="chooseMethod('pick')">
+                    <i class="fa-solid fa-hand-pointer" style="font-size:28px;color:var(--gold);margin-bottom:12px;"></i>
+                    <h3>自己抽牌</h3>
+                    <p>從牌堆中親手選出<br>屬於你的三張牌</p>
+                </div>
+                <div class="method-card" onclick="chooseMethod('number')">
+                    <i class="fa-solid fa-hashtag" style="font-size:28px;color:var(--gold);margin-bottom:12px;"></i>
+                    <h3>數字選牌</h3>
+                    <p>從 1 到 78 中選數字<br>對應你命定的牌</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ SCREEN 3b: Number Input ═══ -->
+        <div class="screen" id="screen-numbers">
+            <div class="logo" style="font-size: clamp(22px,5vw,32px);">✧</div>
+            <h2 class="title-cn" style="font-size: clamp(20px,4.5vw,26px); margin: 12px 0;">選擇你的數字</h2>
+            <p class="instruction">
+                從 <strong>1</strong> 到 <strong>78</strong> 之間<br>
+                選出三個數字
+            </p>
+
+            <div class="number-inputs">
+                <div class="num-field">
+                    <label>過去</label>
+                    <input type="number" id="num1" min="1" max="78" placeholder="?">
+                </div>
+                <div class="num-field">
+                    <label>現在</label>
+                    <input type="number" id="num2" min="1" max="78" placeholder="?">
+                </div>
+                <div class="num-field">
+                    <label>未來</label>
+                    <input type="number" id="num3" min="1" max="78" placeholder="?">
+                </div>
+            </div>
+            <div class="error-msg" id="number-error"></div>
+
+            <button class="btn btn-primary" onclick="submitNumbers()">確認</button>
+        </div>
+
+        <!-- ═══ SCREEN 3c: Pick Your Own Cards ═══ -->
+        <div class="screen" id="screen-pick">
+            <div class="logo" style="font-size: clamp(22px,5vw,32px);">✧</div>
+            <h2 class="title-cn" style="font-size: clamp(18px,4vw,24px); margin: 8px 0;">從牌堆中選出三張牌</h2>
+            <p class="pick-counter">已選擇 <strong id="pick-count">0</strong> / 3 張</p>
+
+            <p class="pick-scroll-hint"><i class="fa-solid fa-arrows-left-right"></i>&ensp;左右滑動瀏覽牌堆，點選 3 張牌</p>
+
+            <button class="pick-auto-btn" onclick="autoDrawFromPick()">
+                <i class="fa-solid fa-shuffle"></i>&ensp;讓系統幫我抽
+            </button>
+
+            <div class="pick-scroll-wrap">
+                <div class="pick-grid" id="pick-grid"></div>
+            </div>
+
+            <button class="btn btn-primary" id="btn-pick-confirm" onclick="confirmPickedCards()" style="display:none;">
+                <i class="fa-solid fa-check"></i>&ensp;確認選牌
+            </button>
+        </div>
+
+        <!-- ═══ SCREEN 4: Card Reveal ═══ -->
+        <div class="screen" id="screen-reveal">
+            <div class="logo" style="font-size: clamp(22px,5vw,32px);">✧</div>
+            <h2 class="title-cn" id="reveal-title" style="font-size: clamp(20px,4.5vw,26px); margin: 12px 0;">你的牌已就位</h2>
+            <div class="fortune-date" id="reveal-date"></div>
+
+            <div id="shuffle-anim" class="shuffle-container" style="display:none;">
+                <div class="shuffle-card"></div>
+                <div class="shuffle-card"></div>
+                <div class="shuffle-card"></div>
+            </div>
+
+            <div class="spread" id="card-spread" style="display:none;"></div>
+
+            <button class="btn btn-primary" id="btn-flip" onclick="flipCards()" style="display:none;">
+                <i class="fa-solid fa-eye"></i>&ensp;翻開牌面
+            </button>
+            <button class="btn btn-primary" id="btn-read" onclick="startReading()" style="display:none;">
+                <i class="fa-solid fa-book-open"></i>&ensp;開始解讀
+            </button>
+        </div>
+
+
+        <!-- ═══ SCREEN: API Settings ═══ -->
+        <div class="screen" id="screen-settings">
+            <div class="logo" style="font-size: clamp(22px,5vw,32px);">✧</div>
+            <h2 class="title-cn" style="font-size: clamp(20px,4.5vw,26px); margin: 12px 0;">語言模型 API 設定</h2>
+            <p class="instruction" style="margin-bottom: 4px;">
+                連接你的 LLM API，解讀時會使用此金鑰
+            </p>
+
+            <form class="settings-form" id="settings-form" onsubmit="return saveSettings(event)">
+                <div class="settings-field">
+                    <label for="api-provider">服務商</label>
+                    <select id="api-provider" onchange="onProviderChange()">
+                        <option value="openai">OpenAI</option>
+                        <option value="anthropic">Anthropic</option>
+                        <option value="openrouter">OpenRouter</option>
+                        <option value="custom">自訂（OpenAI 相容）</option>
+                    </select>
+                </div>
+                <div class="settings-field">
+                    <label for="api-key">API 金鑰</label>
+                    <div class="settings-key-row">
+                        <input type="password" id="api-key" autocomplete="off" spellcheck="false" placeholder="sk-… 或你的 API key">
+                        <button type="button" class="settings-eye" onclick="toggleKeyVisibility()" aria-label="顯示或隱藏金鑰">
+                            <i class="fa-solid fa-eye" id="api-key-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="settings-field">
+                    <label for="api-model">模型名稱</label>
+                    <input type="text" id="api-model" spellcheck="false" placeholder="例如 gpt-4o">
+                </div>
+                <div class="settings-field">
+                    <label for="api-base">API 位址</label>
+                    <input type="url" id="api-base" spellcheck="false" placeholder="https://api.openai.com/v1">
+                </div>
+                <p class="settings-hint">
+                    金鑰只保存在這台裝置的瀏覽器中，不會送到本應用的伺服器。若瀏覽器被跨域政策擋下，可改用 OpenRouter，或填入允許瀏覽器呼叫的自訂位址。
+                </p>
+                <div class="settings-status" id="settings-status"></div>
+                <div class="settings-actions">
+                    <button type="submit" class="btn btn-primary">儲存設定</button>
+                    <button type="button" class="btn" onclick="clearApiKey()">清除金鑰</button>
+                    <button type="button" class="btn" onclick="closeSettings()">返回</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- ═══ SCREEN 5: Reading ═══ -->
+        <div class="screen" id="screen-reading" style="justify-content: flex-start; padding-top: 40px;">
+            <div class="reading-container">
+                <h2 class="title-cn" id="reading-title" style="font-size: clamp(20px,4.5vw,26px); margin-bottom: 4px; text-align:center;">
+                    ✧ 塔羅解讀 ✧
+                </h2>
+                <div class="fortune-date" id="reading-date" style="text-align:center;"></div>
+
+                <div class="reading-cards-mini" id="mini-cards"></div>
+
+                <div id="reading-loader" class="loading-ring-wrap" style="display:none;">
+                    <div class="loading-ring">
+                        <svg viewBox="0 0 130 130">
+                            <circle class="loading-ring-bg" cx="65" cy="65" r="60"/>
+                            <circle class="loading-ring-fill" id="loader-ring-fill" cx="65" cy="65" r="60"/>
+                        </svg>
+                        <div class="loading-ring-pct" id="loader-pct">0%</div>
+                    </div>
+                    <div class="loading-ring-label">塔羅師正在解讀牌面...</div>
+                </div>
+
+                <div class="reading-content" id="reading-content" style="display:none;"></div>
+
+                <div class="followup-section" id="followup-section" style="display:none;">
+                    <div class="followup-buttons" id="followup-buttons"></div>
+                    <div class="followup-asked" id="followup-asked"></div>
+                    <div class="followup-loader" id="followup-loader">
+                        <span class="loading-dots" aria-hidden="true"><span></span><span></span><span></span></span>
+                        塔羅師正在補充解讀...
+                    </div>
+                    <div class="reading-content" id="followup-content" style="display:none; text-align:left;"></div>
+                    <p class="followup-welcome" id="followup-welcome">這是本次占卜的最後補充。歡迎再來詢問其他預測。</p>
+                </div>
+
+                <div style="text-align:center; margin: 30px 0 50px;">
+                    <button class="btn" onclick="restart()">
+                        <i class="fa-solid fa-rotate-left"></i>&ensp;重新占卜
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+    /* ═══════════════════════════════════════════
+       Dark / Light mode detection
+       ═══════════════════════════════════════════ */
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.documentElement.classList.add('dark');
+    }
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+        if (event.matches) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    });
+
+    /* ═══════════════════════════════════════════
+       Star generation
+       ═══════════════════════════════════════════ */
+    (function createStars() {
+        const c = document.getElementById('stars-container');
+        for (let i = 0; i < 160; i++) {
+            const s = document.createElement('div');
+            s.className = 'star';
+            s.style.left = Math.random() * 100 + '%';
+            s.style.top = Math.random() * 100 + '%';
+            const size = Math.random() * 2 + 0.5;
+            s.style.width = size + 'px';
+            s.style.height = size + 'px';
+            s.style.setProperty('--dur', (3 + Math.random() * 5) + 's');
+            s.style.setProperty('--peak', (0.3 + Math.random() * 0.7).toString());
+            s.style.animationDelay = (Math.random() * 6) + 's';
+            c.appendChild(s);
+        }
+    })();
+
+    /* ═══════════════════════════════════════════
+       Breathing label cycle
+       ═══════════════════════════════════════════ */
+    (function breatheCycle() {
+        const label = document.getElementById('breath-label');
+        const phases = [
+            { text: '吸氣...', dur: 3500 },
+            { text: '屏息...', dur: 2000 },
+            { text: '吐氣...', dur: 3500 },
+            { text: '', dur: 1000 },
+        ];
+        let idx = 0;
+        function next() {
+            if (label) label.textContent = phases[idx].text;
+            const d = phases[idx].dur;
+            idx = (idx + 1) % phases.length;
+            setTimeout(next, d);
+        }
+        next();
+    })();
+
+    /* ═══════════════════════════════════════════
+       TAROT DECK DATA
+       ═══════════════════════════════════════════ */
+    const MAJOR_ARCANA = [
+        { name: '愚者', en: 'The Fool', numeral: '0', icon: 'fa-feather', keywords: '新開始・冒險・天真', suit: 'major' },
+        { name: '魔術師', en: 'The Magician', numeral: 'I', icon: 'fa-wand-magic-sparkles', keywords: '創造力・意志・技巧', suit: 'major' },
+        { name: '女祭司', en: 'The High Priestess', numeral: 'II', icon: 'fa-moon', keywords: '直覺・神秘・潛意識', suit: 'major' },
+        { name: '女皇', en: 'The Empress', numeral: 'III', icon: 'fa-seedling', keywords: '豐饒・母性・自然', suit: 'major' },
+        { name: '皇帝', en: 'The Emperor', numeral: 'IV', icon: 'fa-chess-king', keywords: '權威・結構・領導', suit: 'major' },
+        { name: '教皇', en: 'The Hierophant', numeral: 'V', icon: 'fa-book', keywords: '傳統・信仰・指引', suit: 'major' },
+        { name: '戀人', en: 'The Lovers', numeral: 'VI', icon: 'fa-heart', keywords: '愛情・選擇・和諧', suit: 'major' },
+        { name: '戰車', en: 'The Chariot', numeral: 'VII', icon: 'fa-flag', keywords: '勝利・意志力・決心', suit: 'major' },
+        { name: '力量', en: 'Strength', numeral: 'VIII', icon: 'fa-hand-fist', keywords: '勇氣・耐心・內在力量', suit: 'major' },
+        { name: '隱者', en: 'The Hermit', numeral: 'IX', icon: 'fa-mountain', keywords: '內省・智慧・獨處', suit: 'major' },
+        { name: '命運之輪', en: 'Wheel of Fortune', numeral: 'X', icon: 'fa-dharmachakra', keywords: '轉變・命運・機運', suit: 'major' },
+        { name: '正義', en: 'Justice', numeral: 'XI', icon: 'fa-scale-balanced', keywords: '公正・真相・因果', suit: 'major' },
+        { name: '倒吊人', en: 'The Hanged Man', numeral: 'XII', icon: 'fa-arrows-rotate', keywords: '犧牲・等待・新視角', suit: 'major' },
+        { name: '死神', en: 'Death', numeral: 'XIII', icon: 'fa-skull', keywords: '結束・轉化・重生', suit: 'major' },
+        { name: '節制', en: 'Temperance', numeral: 'XIV', icon: 'fa-droplet', keywords: '平衡・耐心・調和', suit: 'major' },
+        { name: '惡魔', en: 'The Devil', numeral: 'XV', icon: 'fa-fire-flame-curved', keywords: '束縛・誘惑・陰影', suit: 'major' },
+        { name: '高塔', en: 'The Tower', numeral: 'XVI', icon: 'fa-bolt', keywords: '突變・覺醒・解放', suit: 'major' },
+        { name: '星星', en: 'The Star', numeral: 'XVII', icon: 'fa-star', keywords: '希望・靈感・平靜', suit: 'major' },
+        { name: '月亮', en: 'The Moon', numeral: 'XVIII', icon: 'fa-moon', keywords: '幻象・恐懼・潛意識', suit: 'major' },
+        { name: '太陽', en: 'The Sun', numeral: 'XIX', icon: 'fa-sun', keywords: '快樂・成功・活力', suit: 'major' },
+        { name: '審判', en: 'Judgement', numeral: 'XX', icon: 'fa-bell', keywords: '覺醒・重生・召喚', suit: 'major' },
+        { name: '世界', en: 'The World', numeral: 'XXI', icon: 'fa-earth-americas', keywords: '完成・整合・圓滿', suit: 'major' },
+    ];
+
+    const SUIT_INFO = {
+        wands:      { cn: '權杖', en: 'Wands',     icon: 'fa-fire',          cls: 'suit-wands' },
+        cups:       { cn: '聖杯', en: 'Cups',       icon: 'fa-droplet',       cls: 'suit-cups' },
+        swords:     { cn: '寶劍', en: 'Swords',     icon: 'fa-shield-halved', cls: 'suit-swords' },
+        pentacles:  { cn: '錢幣', en: 'Pentacles',  icon: 'fa-circle',        cls: 'suit-pentacles' },
+    };
+
+    const MINOR_VALUES = [
+        { rank: 'Ace', cn: '一',   keywords: '新開始・潛能' },
+        { rank: '2',   cn: '二',   keywords: '平衡・選擇' },
+        { rank: '3',   cn: '三',   keywords: '成長・合作' },
+        { rank: '4',   cn: '四',   keywords: '穩定・基礎' },
+        { rank: '5',   cn: '五',   keywords: '衝突・挑戰' },
+        { rank: '6',   cn: '六',   keywords: '和諧・交流' },
+        { rank: '7',   cn: '七',   keywords: '探索・反思' },
+        { rank: '8',   cn: '八',   keywords: '行動・轉變' },
+        { rank: '9',   cn: '九',   keywords: '接近完成・堅持' },
+        { rank: '10',  cn: '十',   keywords: '圓滿・結局' },
+        { rank: 'Page',   cn: '侍從', keywords: '學習・好奇' },
+        { rank: 'Knight', cn: '騎士', keywords: '追求・行動' },
+        { rank: 'Queen',  cn: '皇后', keywords: '滋養・成熟' },
+        { rank: 'King',   cn: '國王', keywords: '掌控・智慧' },
+    ];
+
+    /* Build full 78-card deck */
+    const DECK = [];
+    MAJOR_ARCANA.forEach((card, i) => {
+        DECK.push({ ...card, id: i, suitCls: 'suit-major' });
+    });
+    const suitKeys = ['wands', 'cups', 'swords', 'pentacles'];
+    suitKeys.forEach(sk => {
+        const si = SUIT_INFO[sk];
+        MINOR_VALUES.forEach(val => {
+            DECK.push({
+                id: DECK.length,
+                name: si.cn + val.cn,
+                en: val.rank + ' of ' + si.en,
+                numeral: val.rank === 'Ace' ? 'A' : val.rank,
+                icon: si.icon,
+                keywords: val.keywords,
+                suit: sk,
+                suitCls: si.cls,
+            });
+        });
+    });
+
+    /* ═══════════════════════════════════════════
+       APP STATE
+       ═══════════════════════════════════════════ */
+    let userQuestion = '';
+    let drawnCards = [];      // [{card, reversed}]
+    let appMode = 'tarot';    // 'tarot' | 'daily' | 'weekly'
+    let selectedZodiac = null; // zodiac object
+    let lastReadingMarkdown = '';
+    let followupUsed = false;
+    const TAROT_POSITIONS = ['過去', '現在', '未來'];
+    const DAILY_POSITIONS = ['整體運勢', '愛情運', '事業財運'];
+    const WEEKLY_POSITIONS = ['事業學業', '感情人際', '健康財運'];
+
+    const ZODIAC_SIGNS = [
+        { name: '牡羊座', en: 'Aries',       sym: '♈', dates: '3/21 - 4/19' },
+        { name: '金牛座', en: 'Taurus',      sym: '♉', dates: '4/20 - 5/20' },
+        { name: '雙子座', en: 'Gemini',      sym: '♊', dates: '5/21 - 6/20' },
+        { name: '巨蟹座', en: 'Cancer',      sym: '♋', dates: '6/21 - 7/22' },
+        { name: '獅子座', en: 'Leo',         sym: '♌', dates: '7/23 - 8/22' },
+        { name: '處女座', en: 'Virgo',       sym: '♍', dates: '8/23 - 9/22' },
+        { name: '天秤座', en: 'Libra',       sym: '♎', dates: '9/23 - 10/22' },
+        { name: '天蠍座', en: 'Scorpio',     sym: '♏', dates: '10/23 - 11/21' },
+        { name: '射手座', en: 'Sagittarius', sym: '♐', dates: '11/22 - 12/21' },
+        { name: '摩羯座', en: 'Capricorn',   sym: '♑', dates: '12/22 - 1/19' },
+        { name: '水瓶座', en: 'Aquarius',    sym: '♒', dates: '1/20 - 2/18' },
+        { name: '雙魚座', en: 'Pisces',      sym: '♓', dates: '2/19 - 3/20' },
+    ];
+
+    function getPositions() {
+        if (appMode === 'weekly') return WEEKLY_POSITIONS;
+        if (appMode === 'daily') return DAILY_POSITIONS;
+        return TAROT_POSITIONS;
+    }
+
+    function getTodayString() {
+        const d = new Date();
+        const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+        return d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日  星期' + weekdays[d.getDay()];
+    }
+
+    function getWeekRangeString() {
+        const now = new Date();
+        const day = now.getDay();
+        const diffToMon = day === 0 ? -6 : 1 - day;
+        const monday = new Date(now);
+        monday.setDate(now.getDate() + diffToMon);
+        const sunday = new Date(monday);
+        sunday.setDate(monday.getDate() + 6);
+        return (monday.getMonth() + 1) + '/' + monday.getDate() + ' — ' + (sunday.getMonth() + 1) + '/' + sunday.getDate();
+    }
+
+    /* Render zodiac grid once */
+    (function buildZodiacGrid() {
+        const grid = document.getElementById('zodiac-grid');
+        ZODIAC_SIGNS.forEach((z, i) => {
+            const el = document.createElement('div');
+            el.className = 'zodiac-item';
+            el.setAttribute('onclick', 'chooseZodiac(' + i + ')');
+            el.innerHTML =
+                '<span class="zodiac-sym">' + z.sym + '</span>' +
+                '<span class="zodiac-name">' + z.name + '</span>' +
+                '<span class="zodiac-dates">' + z.dates + '</span>';
+            grid.appendChild(el);
+        });
+    })();
+
+    /* ═══════════════════════════════════════════
+       PICK-YOUR-OWN CARDS
+       ═══════════════════════════════════════════ */
+    let pickShuffled = [];
+    let pickedIndices = [];
+    const PICK_CARD_COUNT = 78;
+
+    function initPickScreen() {
+        /* Fisher-Yates shuffle of deck indices */
+        pickShuffled = Array.from({ length: 78 }, function (_, i) { return i; });
+        for (let i = pickShuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            const tmp = pickShuffled[i];
+            pickShuffled[i] = pickShuffled[j];
+            pickShuffled[j] = tmp;
+        }
+        pickedIndices = [];
+
+        const grid = document.getElementById('pick-grid');
+        grid.innerHTML = '';
+        for (let i = 0; i < PICK_CARD_COUNT; i++) {
+            const card = document.createElement('div');
+            card.className = 'pick-card';
+            card.dataset.idx = String(i);
+            card.style.animationDelay = (i * 0.008) + 's';
+            card.innerHTML = '<span class="pick-sym">✧</span><span class="pick-badge"></span>';
+            card.addEventListener('click', (function (index) {
+                return function () { togglePickCard(index); };
+            })(i));
+            grid.appendChild(card);
+        }
+
+        document.getElementById('pick-count').textContent = '0';
+        document.getElementById('btn-pick-confirm').style.display = 'none';
+        goToScreen('screen-pick');
+
+        /* Drag-to-scroll for desktop */
+        setupDragScroll(grid);
+        /* Scroll to middle on open */
+        setTimeout(function () {
+            grid.scrollLeft = (grid.scrollWidth - grid.clientWidth) / 2;
+        }, 500);
+    }
+
+    /* Drag-to-scroll helper for mouse users */
+    function setupDragScroll(el) {
+        let isDown = false, startX, scrollLeft, hasMoved;
+        el.addEventListener('mousedown', function (e) {
+            if (e.target.closest('.pick-card')) { /* let click through for cards */ }
+            isDown = true;
+            hasMoved = false;
+            startX = e.pageX - el.offsetLeft;
+            scrollLeft = el.scrollLeft;
+        });
+        el.addEventListener('mouseleave', function () { isDown = false; });
+        el.addEventListener('mouseup', function () { isDown = false; });
+        el.addEventListener('mousemove', function (e) {
+            if (!isDown) return;
+            e.preventDefault();
+            const x = e.pageX - el.offsetLeft;
+            const walk = (x - startX) * 1.5;
+            if (Math.abs(walk) > 4) hasMoved = true;
+            el.scrollLeft = scrollLeft - walk;
+        });
+        /* Prevent card click if user was dragging */
+        el.addEventListener('click', function (e) {
+            if (hasMoved) { e.stopPropagation(); hasMoved = false; }
+        }, true);
+    }
+
+    function togglePickCard(idx) {
+        const cards = document.querySelectorAll('.pick-card');
+        const card = cards[idx];
+        if (!card) return;
+        const pos = pickedIndices.indexOf(idx);
+
+        if (pos !== -1) {
+            /* Deselect */
+            pickedIndices.splice(pos, 1);
+            card.classList.remove('selected');
+        } else if (pickedIndices.length < 3) {
+            /* Select */
+            pickedIndices.push(idx);
+            card.classList.add('selected');
+        } else {
+            return; /* already 3 selected */
+        }
+
+        /* Update all badges */
+        cards.forEach(function (c) {
+            var cIdx = parseInt(c.dataset.idx, 10);
+            var cPos = pickedIndices.indexOf(cIdx);
+            var badge = c.querySelector('.pick-badge');
+            badge.textContent = cPos !== -1 ? String(cPos + 1) : '';
+        });
+
+        document.getElementById('pick-count').textContent = String(pickedIndices.length);
+        document.getElementById('btn-pick-confirm').style.display =
+            pickedIndices.length === 3 ? '' : 'none';
+    }
+
+    function confirmPickedCards() {
+        drawnCards = pickedIndices.map(function (idx) {
+            return {
+                card: DECK[pickShuffled[idx]],
+                reversed: Math.random() < 0.4,
+            };
+        });
+        goToScreen('screen-reveal');
+        setTimeout(renderSpread, 500);
+    }
+
+    function autoDrawFromPick() {
+        drawDailyFortune();
+    }
+
+    /* ═══════════════════════════════════════════
+       SCREEN NAVIGATION
+       ═══════════════════════════════════════════ */
+    function goToScreen(id) {
+        const current = document.querySelectorAll('.screen.active');
+        current.forEach(s => {
+            s.style.opacity = '0';
+            s.style.transform = 'translateY(-12px)';
+        });
+        setTimeout(() => {
+            current.forEach(s => {
+                s.classList.remove('active');
+                s.style.opacity = '';
+                s.style.transform = '';
+            });
+            const target = document.getElementById(id);
+            target.style.opacity = '0';
+            target.style.transform = 'translateY(20px)';
+            target.classList.add('active');
+            /* force reflow so browser registers the initial state */
+            void target.offsetWidth;
+            target.style.opacity = '1';
+            target.style.transform = 'translateY(0)';
+        }, 420);
+    }
+
+    /* ═══════════════════════════════════════════
+       MODE SELECTION
+       ═══════════════════════════════════════════ */
+    function chooseMode(mode) {
+        appMode = mode;
+        if (mode === 'daily') {
+            document.getElementById('reveal-title').textContent = '今日運程';
+            document.getElementById('reveal-date').textContent = getTodayString();
+            document.getElementById('reading-title').innerHTML = '✧ 今日運程 ✧';
+            document.getElementById('reading-date').textContent = getTodayString();
+            userQuestion = '今日運程';
+            initPickScreen();
+        } else if (mode === 'weekly') {
+            document.getElementById('zodiac-week-label').textContent = '本週 ' + getWeekRangeString();
+            goToScreen('screen-zodiac');
+        } else {
+            document.getElementById('reveal-title').textContent = '你的牌已就位';
+            document.getElementById('reveal-date').textContent = '';
+            document.getElementById('reading-title').innerHTML = '✧ 塔羅解讀 ✧';
+            document.getElementById('reading-date').textContent = '';
+            goToScreen('screen-question');
+        }
+    }
+
+    function drawDailyFortune() {
+        goToScreen('screen-reveal');
+        const shuffleEl = document.getElementById('shuffle-anim');
+        const spreadEl = document.getElementById('card-spread');
+        const flipBtn = document.getElementById('btn-flip');
+        const readBtn = document.getElementById('btn-read');
+
+        shuffleEl.style.display = 'block';
+        spreadEl.style.display = 'none';
+        flipBtn.style.display = 'none';
+        readBtn.style.display = 'none';
+
+        /* Pick 3 unique random cards */
+        const indices = new Set();
+        while (indices.size < 3) {
+            indices.add(Math.floor(Math.random() * 78));
+        }
+        drawnCards = [...indices].map(idx => ({
+            card: DECK[idx],
+            reversed: Math.random() < 0.4,
+        }));
+
+        setTimeout(() => {
+            shuffleEl.style.display = 'none';
+            renderSpread();
+        }, 2000);
+    }
+
+    /* ─── Zodiac selection (weekly) ─── */
+    function chooseZodiac(idx) {
+        selectedZodiac = ZODIAC_SIGNS[idx];
+        const weekRange = getWeekRangeString();
+        const subTitle = selectedZodiac.sym + ' ' + selectedZodiac.name + '  ' + weekRange;
+        document.getElementById('reveal-title').textContent = '本週星座運';
+        document.getElementById('reveal-date').textContent = subTitle;
+        document.getElementById('reading-title').innerHTML = '✧ ' + selectedZodiac.name + ' 本週運勢 ✧';
+        document.getElementById('reading-date').textContent = weekRange;
+        userQuestion = selectedZodiac.name + ' 本週星座運勢';
+        /* Go to pick screen — user can pick or auto-draw */
+        initPickScreen();
+    }
+
+    /* ═══════════════════════════════════════════
+       STEP 2: Submit question
+       ═══════════════════════════════════════════ */
+    function submitQuestion() {
+        const q = document.getElementById('question-input').value.trim();
+        const err = document.getElementById('question-error');
+        if (!q) {
+            err.textContent = '請輸入你的問題';
+            return;
+        }
+        err.textContent = '';
+        userQuestion = q;
+        goToScreen('screen-method');
+    }
+
+    /* ═══════════════════════════════════════════
+       STEP 3: Choose method
+       ═══════════════════════════════════════════ */
+    function chooseMethod(method) {
+        if (method === 'random') {
+            drawRandomCards();
+        } else if (method === 'pick') {
+            initPickScreen();
+        } else {
+            goToScreen('screen-numbers');
+        }
+    }
+
+    /* ─── Random draw ─── */
+    function drawRandomCards() {
+        goToScreen('screen-reveal');
+        const shuffleEl = document.getElementById('shuffle-anim');
+        const spreadEl = document.getElementById('card-spread');
+        const flipBtn = document.getElementById('btn-flip');
+        const readBtn = document.getElementById('btn-read');
+
+        shuffleEl.style.display = 'block';
+        spreadEl.style.display = 'none';
+        flipBtn.style.display = 'none';
+        readBtn.style.display = 'none';
+
+        /* Pick 3 unique random cards */
+        const indices = new Set();
+        while (indices.size < 3) {
+            indices.add(Math.floor(Math.random() * 78));
+        }
+        drawnCards = [...indices].map(idx => ({
+            card: DECK[idx],
+            reversed: Math.random() < 0.4,
+        }));
+
+        setTimeout(() => {
+            shuffleEl.style.display = 'none';
+            renderSpread();
+        }, 2000);
+    }
+
+    /* ─── Number selection ─── */
+    function submitNumbers() {
+        const err = document.getElementById('number-error');
+        const vals = [
+            parseInt(document.getElementById('num1').value, 10),
+            parseInt(document.getElementById('num2').value, 10),
+            parseInt(document.getElementById('num3').value, 10),
+        ];
+        if (vals.some(v => isNaN(v))) { err.textContent = '請填入三個數字'; return; }
+        if (vals.some(v => v < 1 || v > 78)) { err.textContent = '數字須在 1 至 78 之間'; return; }
+        if (new Set(vals).size !== 3) { err.textContent = '請選擇三個不同的數字'; return; }
+        err.textContent = '';
+
+        drawnCards = vals.map(v => ({
+            card: DECK[v - 1],
+            reversed: Math.random() < 0.4,
+        }));
+
+        goToScreen('screen-reveal');
+        setTimeout(renderSpread, 500);
+    }
+
+    /* ═══════════════════════════════════════════
+       STEP 4: Render & Reveal cards
+       ═══════════════════════════════════════════ */
+    function renderSpread() {
+        const shuffleEl = document.getElementById('shuffle-anim');
+        const spreadEl = document.getElementById('card-spread');
+        const flipBtn = document.getElementById('btn-flip');
+        const readBtn = document.getElementById('btn-read');
+        shuffleEl.style.display = 'none';
+        flipBtn.style.display = 'none';
+        readBtn.style.display = 'none';
+        spreadEl.innerHTML = '';
+        spreadEl.style.display = 'flex';
+
+        const positions = getPositions();
+        drawnCards.forEach((dc, i) => {
+            const c = dc.card;
+            const slot = document.createElement('div');
+            slot.className = 'card-slot';
+            slot.innerHTML =
+                '<span class="position-label">' + positions[i] + '</span>' +
+                '<div class="tarot-card entrance" style="animation-delay:' + (i * 0.2) + 's" data-idx="' + i + '">' +
+                    '<div class="card-face card-back">' +
+                        '<div class="card-back-inner"><span class="card-back-sym">✧</span></div>' +
+                    '</div>' +
+                    '<div class="card-face card-front ' + c.suitCls + '">' +
+                        '<span class="card-numeral">' + c.numeral + '</span>' +
+                        '<i class="fa-solid ' + c.icon + ' card-icon' + (dc.reversed ? ' reversed' : '') + '"></i>' +
+                        '<div>' +
+                            '<div class="card-name-cn">' + c.name + '</div>' +
+                            '<div class="card-name-en">' + c.en + '</div>' +
+                        '</div>' +
+                        '<span class="orientation-badge ' + (dc.reversed ? 'reversed-badge' : 'upright') + '">' +
+                            (dc.reversed ? '逆位' : '正位') +
+                        '</span>' +
+                        '<div class="card-keywords">' + c.keywords + '</div>' +
+                    '</div>' +
+                '</div>';
+            spreadEl.appendChild(slot);
+        });
+
+        setTimeout(() => { flipBtn.style.display = ''; }, 800);
+    }
+
+    function flipCards() {
+        const cards = document.querySelectorAll('.tarot-card');
+        const flipBtn = document.getElementById('btn-flip');
+        const readBtn = document.getElementById('btn-read');
+        flipBtn.style.display = 'none';
+
+        cards.forEach((card, i) => {
+            setTimeout(() => card.classList.add('flipped'), i * 500);
+        });
+
+        setTimeout(() => {
+            readBtn.style.display = '';
+        }, cards.length * 500 + 600);
+    }
+
+
+    /* ═══════════════════════════════════════════
+       LLM API SETTINGS
+       ═══════════════════════════════════════════ */
+    var LLM_SETTINGS_KEY = 'tarot-llm-settings';
+    var settingsReturnTo = 'screen-meditate';
+    var PROVIDER_DEFAULTS = {
+        openai: { base: 'https://api.openai.com/v1', model: 'gpt-4o' },
+        anthropic: { base: 'https://api.anthropic.com', model: 'claude-sonnet-4-5' },
+        openrouter: { base: 'https://openrouter.ai/api/v1', model: 'openai/gpt-4o' },
+        custom: { base: '', model: 'gpt-4o' }
+    };
+
+    function defaultLlmSettings() {
+        return { provider: 'openai', apiKey: '', model: 'gpt-4o', baseUrl: 'https://api.openai.com/v1' };
+    }
+
+    function loadLlmSettings() {
+        var s = defaultLlmSettings();
+        try {
+            var raw = localStorage.getItem(LLM_SETTINGS_KEY);
+            if (!raw) return s;
+            var parsed = JSON.parse(raw);
+            if (parsed && typeof parsed === 'object') {
+                if (parsed.provider) s.provider = parsed.provider;
+                if (typeof parsed.apiKey === 'string') s.apiKey = parsed.apiKey;
+                if (typeof parsed.model === 'string') s.model = parsed.model;
+                if (typeof parsed.baseUrl === 'string') s.baseUrl = parsed.baseUrl;
+            }
+        } catch (e) {}
+        return s;
+    }
+
+    function hasLlmApiKey() {
+        var key = loadLlmSettings().apiKey;
+        return !!(key && key.trim());
+    }
+
+    function escapeHtml(str) {
+        return String(str).replace(/[&<>"']/g, function (c) {
+            return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
+        });
+    }
+
+    function sanitizeError(err) {
+        var t = (err && err.message) ? err.message : String(err || '未知錯誤');
+        var key = loadLlmSettings().apiKey;
+        if (key && t.indexOf(key) !== -1) t = t.split(key).join('***');
+        return escapeHtml(t);
+    }
+
+    function fillSettingsForm() {
+        var s = loadLlmSettings();
+        document.getElementById('api-provider').value = s.provider || 'openai';
+        document.getElementById('api-key').value = s.apiKey || '';
+        document.getElementById('api-model').value = s.model || '';
+        document.getElementById('api-base').value = s.baseUrl || '';
+        var st = document.getElementById('settings-status');
+        if (hasLlmApiKey()) {
+            st.innerHTML = '<span class="api-ready-dot"></span>已在此裝置儲存金鑰';
+        } else {
+            st.textContent = '尚未設定金鑰，解讀會改嘗試 Poe（若有）。';
+        }
+    }
+
+    function openSettings() {
+        var active = document.querySelector('.screen.active');
+        settingsReturnTo = (active && active.id !== 'screen-settings') ? active.id : 'screen-meditate';
+        fillSettingsForm();
+        goToScreen('screen-settings');
+    }
+
+    function closeSettings() {
+        goToScreen(settingsReturnTo || 'screen-meditate');
+    }
+
+    function onProviderChange() {
+        var provider = document.getElementById('api-provider').value;
+        var defaults = PROVIDER_DEFAULTS[provider] || PROVIDER_DEFAULTS.custom;
+        var baseEl = document.getElementById('api-base');
+        var modelEl = document.getElementById('api-model');
+        var knownBases = {};
+        Object.keys(PROVIDER_DEFAULTS).forEach(function (k) {
+            if (PROVIDER_DEFAULTS[k].base) knownBases[PROVIDER_DEFAULTS[k].base] = true;
+        });
+        if (!baseEl.value.trim() || knownBases[baseEl.value.trim()]) {
+            baseEl.value = defaults.base;
+        }
+        var knownModels = {};
+        Object.keys(PROVIDER_DEFAULTS).forEach(function (k) {
+            knownModels[PROVIDER_DEFAULTS[k].model] = true;
+        });
+        if (!modelEl.value.trim() || knownModels[modelEl.value.trim()]) {
+            modelEl.value = defaults.model;
+        }
+    }
+
+    function toggleKeyVisibility() {
+        var input = document.getElementById('api-key');
+        var icon = document.getElementById('api-key-eye');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    }
+
+    function saveSettings(ev) {
+        if (ev) ev.preventDefault();
+        var settings = {
+            provider: document.getElementById('api-provider').value,
+            apiKey: document.getElementById('api-key').value.trim(),
+            model: document.getElementById('api-model').value.trim(),
+            baseUrl: document.getElementById('api-base').value.trim().replace(/\/+$/, '')
+        };
+        var defaults = PROVIDER_DEFAULTS[settings.provider] || PROVIDER_DEFAULTS.custom;
+        if (!settings.model) settings.model = defaults.model;
+        if (!settings.baseUrl) settings.baseUrl = defaults.base;
+        try {
+            localStorage.setItem(LLM_SETTINGS_KEY, JSON.stringify(settings));
+        } catch (e) {
+            document.getElementById('settings-status').innerHTML = '<span style="color:var(--danger);">無法儲存：瀏覽器可能限制了本機儲存。</span>';
+            return false;
+        }
+        var st = document.getElementById('settings-status');
+        if (settings.apiKey) {
+            st.innerHTML = '<span class="api-ready-dot"></span>已儲存。解讀時會使用此 API 金鑰。';
+        } else {
+            st.textContent = '已儲存服務商與模型，但尚未填寫金鑰。';
+        }
+        return false;
+    }
+
+    function clearApiKey() {
+        var settings = loadLlmSettings();
+        settings.apiKey = '';
+        settings.provider = document.getElementById('api-provider').value || settings.provider;
+        settings.model = document.getElementById('api-model').value.trim() || settings.model;
+        settings.baseUrl = document.getElementById('api-base').value.trim().replace(/\/+$/, '') || settings.baseUrl;
+        try {
+            localStorage.setItem(LLM_SETTINGS_KEY, JSON.stringify(settings));
+        } catch (e) {}
+        document.getElementById('api-key').value = '';
+        document.getElementById('settings-status').textContent = '已清除金鑰。';
+    }
+
+    function joinUrl(base, path) {
+        return String(base || '').replace(/\/+$/, '') + path;
+    }
+
+    function parseSseChunks(buffer, onEvent) {
+        var parts = buffer.split('\n\n');
+        var rest = parts.pop();
+        parts.forEach(function (block) {
+            var eventName = '';
+            var dataLines = [];
+            block.split('\n').forEach(function (line) {
+                if (line.indexOf('event:') === 0) eventName = line.slice(6).trim();
+                else if (line.indexOf('data:') === 0) dataLines.push(line.slice(5).trim());
+            });
+            var data = dataLines.join('\n');
+            if (data) onEvent(eventName, data);
+        });
+        return rest;
+    }
+
+    function extractOpenAiDelta(payload) {
+        if (payload === '[DONE]') return { done: true, text: '' };
+        try {
+            var json = JSON.parse(payload);
+            var choice = json.choices && json.choices[0];
+            var delta = (choice && (choice.delta || choice.message)) || {};
+            return { done: !!(choice && choice.finish_reason), text: delta.content || '' };
+        } catch (e) {
+            return { done: false, text: '' };
+        }
+    }
+
+    function extractAnthropicDelta(eventName, payload) {
+        try {
+            var json = JSON.parse(payload);
+            var type = eventName || json.type;
+            if (type === 'message_stop') return { done: true, text: '' };
+            if (json.type === 'content_block_delta' && json.delta && json.delta.text) {
+                return { done: false, text: json.delta.text };
+            }
+        } catch (e) {}
+        return { done: false, text: '' };
+    }
+
+    async function readSseStream(response, provider, onDelta) {
+        if (!response.body || !response.body.getReader) {
+            var raw = await response.text();
+            var json = JSON.parse(raw);
+            if (provider === 'anthropic') {
+                var blocks = json.content || [];
+                return blocks.map(function (b) { return b.text || ''; }).join('');
+            }
+            return (((json.choices || [])[0] || {}).message || {}).content || '';
+        }
+        var reader = response.body.getReader();
+        var decoder = new TextDecoder();
+        var buffer = '';
+        var full = '';
+        while (true) {
+            var chunk = await reader.read();
+            if (chunk.done) break;
+            buffer += decoder.decode(chunk.value, { stream: true });
+            buffer = parseSseChunks(buffer, function (eventName, data) {
+                var extracted = (provider === 'anthropic')
+                    ? extractAnthropicDelta(eventName, data)
+                    : extractOpenAiDelta(data);
+                if (extracted.text) {
+                    full += extracted.text;
+                    onDelta(full);
+                }
+            });
+        }
+        return full;
+    }
+
+    async function callConfiguredLlm(prompt, onDelta) {
+        var s = loadLlmSettings();
+        var key = (s.apiKey || '').trim();
+        if (!key) throw new Error('尚未設定 API 金鑰');
+        var provider = s.provider || 'openai';
+        var model = s.model || (PROVIDER_DEFAULTS[provider] || PROVIDER_DEFAULTS.openai).model;
+        var base = s.baseUrl || (PROVIDER_DEFAULTS[provider] || PROVIDER_DEFAULTS.openai).base;
+        var headers = { 'Content-Type': 'application/json' };
+        var url, body;
+        var system = '你是一位經驗豐富、充滿智慧且溫柔的塔羅牌占卜師。請使用繁體中文，以 Markdown 回覆。';
+
+        if (provider === 'anthropic') {
+            url = joinUrl(base, '/v1/messages');
+            headers['x-api-key'] = key;
+            headers['anthropic-version'] = '2023-06-01';
+            headers['anthropic-dangerous-direct-browser-access'] = 'true';
+            body = {
+                model: model,
+                max_tokens: 4096,
+                stream: true,
+                system: system,
+                messages: [{ role: 'user', content: prompt }]
+            };
+        } else {
+            url = joinUrl(base, '/chat/completions');
+            headers['Authorization'] = 'Bearer ' + key;
+            if (provider === 'openrouter') {
+                headers['HTTP-Referer'] = location.origin;
+                headers['X-Title'] = '塔羅占卜';
+            }
+            body = {
+                model: model,
+                stream: true,
+                messages: [
+                    { role: 'system', content: system },
+                    { role: 'user', content: prompt }
+                ]
+            };
+        }
+
+        var response = await fetch(url, {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify(body)
+        });
+        if (!response.ok) {
+            var detail = '';
+            try {
+                var errJson = await response.json();
+                detail = (errJson.error && (errJson.error.message || errJson.error)) || errJson.message || JSON.stringify(errJson);
+            } catch (e) {
+                try { detail = await response.text(); } catch (e2) {}
+            }
+            var msg = 'API 回應 ' + response.status;
+            if (detail) msg += '：' + String(detail).slice(0, 240);
+            if (response.status === 0 || response.type === 'opaque') {
+                msg = '瀏覽器可能被跨域政策擋下，請改用 OpenRouter 或可在瀏覽器呼叫的 API 位址。';
+            }
+            throw new Error(msg);
+        }
+        return await readSseStream(response, provider, onDelta);
+    }
+
+    function settingsHintHtml() {
+        return '<p style="color:var(--text-dim);font-size:14px;">請先在右上角齒輪中設定 LLM API 金鑰，或在 Poe 環境中開啟此應用。</p>' +
+            '<p><button type="button" class="settings-link" onclick="openSettings()">前往 API 設定</button></p>';
+    }
+
+    /* ═══════════════════════════════════════════
+       STEP 5: LLM Reading via GPT-5.4
+       ═══════════════════════════════════════════ */
+    function startReading() {
+        goToScreen('screen-reading');
+        lastReadingMarkdown = '';
+        followupUsed = false;
+        resetFollowupUi();
+
+        /* Mini card summary */
+        const positions = getPositions();
+        const miniEl = document.getElementById('mini-cards');
+        miniEl.innerHTML = '';
+        drawnCards.forEach((dc, i) => {
+            const m = document.createElement('div');
+            m.className = 'mini-card';
+            m.innerHTML =
+                '<span class="mini-pos">' + positions[i] + '</span>' +
+                dc.card.name + (dc.reversed ? '（逆位）' : '（正位）');
+            miniEl.appendChild(m);
+        });
+
+        /* Loading state — show ring, hide content */
+        const contentEl = document.getElementById('reading-content');
+        const loaderEl = document.getElementById('reading-loader');
+        const ringFill = document.getElementById('loader-ring-fill');
+        const pctText = document.getElementById('loader-pct');
+        contentEl.style.display = 'none';
+        contentEl.innerHTML = '';
+        loaderEl.style.display = '';
+        ringFill.style.strokeDashoffset = '377';
+        pctText.textContent = '0%';
+
+        /* Simulated percentage progress */
+        let currentPct = 0;
+        const circumference = 377; /* 2 * PI * 60 */
+        function setLoaderPct(pct) {
+            currentPct = Math.min(pct, 100);
+            const offset = circumference - (circumference * currentPct / 100);
+            ringFill.style.strokeDashoffset = String(offset);
+            pctText.textContent = Math.round(currentPct) + '%';
+        }
+        /* Ease up to ~92% during waiting, then jump to 100 on complete */
+        let loaderTimer = setInterval(function () {
+            if (currentPct < 30) { setLoaderPct(currentPct + 1.2); }
+            else if (currentPct < 60) { setLoaderPct(currentPct + 0.7); }
+            else if (currentPct < 85) { setLoaderPct(currentPct + 0.35); }
+            else if (currentPct < 92) { setLoaderPct(currentPct + 0.1); }
+        }, 200);
+
+        /* Build prompt — different for tarot vs daily */
+        const cardLines = drawnCards.map((dc, i) =>
+            (i + 1) + '. ' + positions[i] + '：' + dc.card.name + '（' + dc.card.en + '）— ' + (dc.reversed ? '逆位' : '正位') + ' — 關鍵詞：' + dc.card.keywords
+        ).join('\n');
+
+        let prompt;
+        if (appMode === 'weekly' && selectedZodiac) {
+            const weekRange = getWeekRangeString();
+            prompt =
+                '你是一位精通西洋占星術與塔羅牌的資深占卜師，擅長將星座能量與塔羅牌義結合解讀。\n\n' +
+                '本週日期範圍：' + weekRange + '\n' +
+                '使用者的星座：' + selectedZodiac.name + '（' + selectedZodiac.en + '，' + selectedZodiac.dates + '）\n\n' +
+                '為該星座抽出的三張塔羅牌如下：\n' + cardLines + '\n\n' +
+                '請進行完整的「本週星座運勢」解讀：\n' +
+                '1. ⭐ 本週總覽：結合' + selectedZodiac.name + '的星座特質與牌面，概述本週整體能量走向\n' +
+                '2. 💼 事業與學業：根據「事業學業」牌，分析本週工作、學習、考試方面的運勢與建議\n' +
+                '3. 💕 感情與人際：根據「感情人際」牌，解讀本週在愛情、友情、人際互動方面的走向\n' +
+                '4. 🏥 健康與財運：根據「健康財運」牌，分析本週健康狀況、財務進出的趨勢\n' +
+                '5. 🔮 本週指引：綜合三張牌，給出本週最重要的提醒與行動建議\n' +
+                '6. 🍀 幸運指南：推薦本週幸運日、幸運色、幸運數字\n\n' +
+                '用溫暖有智慧的語調，格式清晰，使用 Markdown 標題和分段。回答使用繁體中文。\n\n請先完整寫出解讀正文，不要省略。解讀全部結束後，再另外寫兩個段落：每段只寫一句建議使用者繼續追問的問題。問題須具體、與這次牌面和情境相關、使用繁體中文，且不可重複原本的問題。最後這兩段不要加標題、編號、引號或說明文字，每段只有那一句。';
+        } else if (appMode === 'daily') {
+            prompt =
+                '你是一位經驗豐富、充滿智慧且溫柔的塔羅牌占卜師，擁有深厚的塔羅牌知識和敏銳的直覺解讀能力。\n\n' +
+                '今天是 ' + getTodayString() + '。使用者想了解今日的運勢。\n\n' +
+                '抽到的三張牌如下：\n' + cardLines + '\n\n' +
+                '請進行完整的「今日運程」塔羅牌解讀：\n' +
+                '1. 🌅 今日整體能量：根據「整體運勢」牌，描述今天的整體氣場與能量\n' +
+                '2. 💕 愛情與人際：根據「愛情運」牌，分析今天在感情、友情、家庭關係方面的運勢\n' +
+                '3. 💼 事業與財運：根據「事業財運」牌，解讀今天在工作、學業、財務方面的走向\n' +
+                '4. ✨ 今日提醒：綜合三張牌，給出今天最重要的建議和需要注意的事項\n' +
+                '5. 🍀 幸運小提示：推薦今日幸運色、幸運數字等小資訊\n\n' +
+                '用溫暖有智慧的語調，格式清晰，使用 Markdown 標題和分段。回答使用繁體中文。\n\n請先完整寫出解讀正文，不要省略。解讀全部結束後，再另外寫兩個段落：每段只寫一句建議使用者繼續追問的問題。問題須具體、與這次牌面和情境相關、使用繁體中文，且不可重複原本的問題。最後這兩段不要加標題、編號、引號或說明文字，每段只有那一句。';
+        } else {
+            prompt =
+                '你是一位經驗豐富、充滿智慧且溫柔的塔羅牌占卜師，擁有深厚的塔羅牌知識和敏銳的直覺解讀能力。\n\n' +
+                '使用者的問題：' + userQuestion + '\n\n' +
+                '使用「過去—現在—未來」三張牌牌陣，抽到的牌如下：\n' + cardLines + '\n\n' +
+                '請進行完整的塔羅牌解讀：\n' +
+                '1. 總覽：簡述這個牌陣的整體氣場與能量走向\n' +
+                '2. 逐張解析：針對每張牌在其位置上的含義深入解讀（包含正位或逆位的特殊意義）\n' +
+                '3. 整體串聯：將三張牌串聯起來，說明它們如何回應使用者的問題\n' +
+                '4. 建議與指引：給出具體、正面的建議\n\n' +
+                '用溫暖有智慧的語調，格式清晰，使用 Markdown 標題和分段。回答使用繁體中文。\n\n請先完整寫出解讀正文，不要省略。解讀全部結束後，再另外寫兩個段落：每段只寫一句建議使用者繼續追問的問題。問題須具體、與這次牌面和情境相關、使用繁體中文，且不可重複原本的問題。最後這兩段不要加標題、編號、引號或說明文字，每段只有那一句。';
+        }
+
+        function revealReading(markdown) {
+            var parsed = extractFollowups(markdown);
+            lastReadingMarkdown = parsed.body;
+            followupUsed = false;
+            clearInterval(loaderTimer);
+            setLoaderPct(100);
+            setTimeout(function () {
+                loaderEl.style.display = 'none';
+                contentEl.innerHTML = marked.parse(lastReadingMarkdown || '');
+                contentEl.style.display = '';
+                contentEl.style.opacity = '0';
+                void contentEl.offsetWidth;
+                contentEl.style.transition = 'opacity 0.6s ease';
+                contentEl.style.opacity = '1';
+                showFollowupButtons(parsed.questions);
+            }, 600);
+        }
+
+        function failReading(html) {
+            clearInterval(loaderTimer);
+            loaderEl.style.display = 'none';
+            contentEl.style.display = '';
+            contentEl.innerHTML = html;
+        }
+
+        /* Prefer a saved LLM API key; otherwise fall back to Poe */
+        if (hasLlmApiKey()) {
+            callConfiguredLlm(prompt, function (partial) {
+                var estimated = Math.min(30 + (partial.length / 2500) * 62, 92);
+                if (estimated > currentPct) setLoaderPct(estimated);
+            }).then(function (text) {
+                if (!text) {
+                    failReading('<p style="color:var(--danger);">解讀時沒有收到內容，請確認模型名稱與金鑰後再試。</p>' + settingsHintHtml());
+                    return;
+                }
+                revealReading(text);
+            }).catch(function (err) {
+                failReading('<p style="color:var(--danger);">無法開始解讀：' + sanitizeError(err) + '</p>' + settingsHintHtml());
+            });
+        } else if (window.Poe) {
+            window.Poe.registerHandler('reading-handler', function (result) {
+                const msg = result.responses[0];
+                if (!msg) return;
+                if (msg.status === 'error') {
+                    failReading('<p style="color:var(--danger);">解讀時發生錯誤：' + escapeHtml(msg.statusText || '未知錯誤') + '</p>' +
+                        '<p style="color:var(--text-dim);font-size:14px;">請重新嘗試占卜，或改在設定中使用 LLM API 金鑰。</p>' + settingsHintHtml());
+                } else if (msg.status === 'incomplete') {
+                    const len = msg.content.length;
+                    const estimated = Math.min(30 + (len / 2500) * 62, 92);
+                    if (estimated > currentPct) setLoaderPct(estimated);
+                } else if (msg.status === 'complete') {
+                    revealReading(msg.content);
+                }
+            });
+
+            window.Poe.sendUserMessage('@GPT-5.4 ' + prompt, {
+                handler: 'reading-handler',
+                stream: true,
+                openChat: false,
+                parameters: {}
+            }).catch(function (err) {
+                failReading('<p style="color:var(--danger);">無法開始解讀：' + sanitizeError(err) + '</p>' + settingsHintHtml());
+            });
+        } else {
+            failReading('<p style="color:var(--text-dim);">尚未設定 LLM API 金鑰，也沒有載入 Poe API，因此無法進行解讀。</p>' + settingsHintHtml());
+        }
+    }
+
+
+    /* ═══════════════════════════════════════════
+       Follow-up recommended questions (one round)
+       ═══════════════════════════════════════════ */
+    function parseQuestionLines(block) {
+        return String(block || '').split(/\n+/).map(function (line) {
+            return cleanQuestionText(line);
+        }).filter(Boolean);
+    }
+
+    function cleanQuestionText(p) {
+        return String(p || '')
+            .replace(/^#+\s*/, '')
+            .replace(/^\s*(?:[-*•]|\d+[\.\)、．])\s*/, '')
+            .replace(/^[「「"']+|[」」"']+$/g, '')
+            .replace(/[*_]{1,2}/g, '')
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
+    function isRecommendHeading(p) {
+        var t = cleanQuestionText(p);
+        return t.length <= 24 && /你可能還想|還想了解|可以再問|延伸問題|後續問題|推薦問題|想繼續問|你也可以問|試著問問/.test(t);
+    }
+
+    function looksLikeQuestion(p) {
+        var t = cleanQuestionText(p);
+        if (!t || t.length < 4 || t.length > 60) return false;
+        if (String(p).split('\n').filter(function (l) { return l.trim(); }).length > 2) return false;
+        if (t.length > 48 && !/[？?]$/.test(t)) return false;
+        return true;
+    }
+
+    function extractTrailingQuestions(text) {
+        var raw = String(text || '').trim();
+        var parts = raw.split(/\n\s*\n/).map(function (b) { return b.trim(); }).filter(Boolean);
+        while (parts.length && /^(-{3,}|\*{3,}|_{3,}|\s*<hr\b[^>]*>)$/i.test(parts[parts.length - 1])) {
+            parts.pop();
+        }
+        if (parts.length < 2) return { body: raw, questions: [] };
+
+        var last = parts[parts.length - 1];
+        var lastLines = last.split(/\n/).map(function (l) { return cleanQuestionText(l); }).filter(Boolean);
+        if (lastLines.length === 2 && looksLikeQuestion(lastLines[0]) && looksLikeQuestion(lastLines[1])) {
+            var cutA = parts.length - 1;
+            if (cutA > 0 && isRecommendHeading(parts[cutA - 1])) cutA -= 1;
+            return { body: parts.slice(0, cutA).join('\n\n').trim(), questions: lastLines };
+        }
+
+        if (parts.length >= 3) {
+            var q1 = cleanQuestionText(parts[parts.length - 2]);
+            var q2 = cleanQuestionText(parts[parts.length - 1]);
+            if (looksLikeQuestion(q1) && looksLikeQuestion(q2)) {
+                var cutB = parts.length - 2;
+                if (cutB > 0 && isRecommendHeading(parts[cutB - 1])) cutB -= 1;
+                return { body: parts.slice(0, cutB).join('\n\n').trim(), questions: [q1, q2] };
+            }
+        }
+        return { body: raw, questions: [] };
+    }
+
+    function extractFollowups(markdown) {
+        var text = String(markdown || '');
+        var re = /<!--\s*FOLLOWUPS\s*([\s\S]*?)\s*FOLLOWUPS\s*-->/i;
+        var m = text.match(re);
+        if (m) {
+            var body = (text.slice(0, m.index) + text.slice(m.index + m[0].length)).trim();
+            var questions = parseQuestionLines(m[1]).filter(looksLikeQuestion).slice(0, 2);
+            if (questions.length === 2) return { body: body, questions: questions };
+            var fromTail = extractTrailingQuestions(body);
+            if (fromTail.questions.length) return fromTail;
+            text = body;
+        }
+        return extractTrailingQuestions(text);
+    }
+
+    function defaultFollowupQuestions() {
+        if (appMode === 'daily') {
+            return ['今天最適合採取的行動是什麼？', '今晚或深夜需要特別注意什麼？'];
+        }
+        if (appMode === 'weekly' && selectedZodiac) {
+            return [selectedZodiac.name + '本週最該把握的機會是什麼？', '本週在人際或感情上需要留意什麼？'];
+        }
+        return ['根據牌面，我近期最該採取的具體行動是什麼？', '這件事在未來三個月可能會如何發展？'];
+    }
+
+    function resetFollowupUi() {
+        var section = document.getElementById('followup-section');
+        var buttons = document.getElementById('followup-buttons');
+        var asked = document.getElementById('followup-asked');
+        var loader = document.getElementById('followup-loader');
+        var content = document.getElementById('followup-content');
+        var welcome = document.getElementById('followup-welcome');
+        if (!section) return;
+        section.style.display = 'none';
+        buttons.style.display = '';
+        buttons.innerHTML = '';
+        asked.style.display = 'none';
+        asked.textContent = '';
+        loader.style.display = 'none';
+        content.style.display = 'none';
+        content.innerHTML = '';
+        welcome.style.display = 'none';
+    }
+
+    function showFollowupButtons(questions) {
+        var list = (questions && questions.length) ? questions.slice() : [];
+        var fallbacks = defaultFollowupQuestions();
+        fallbacks.forEach(function (q) {
+            if (list.length < 2 && list.indexOf(q) === -1) list.push(q);
+        });
+        list = list.slice(0, 2);
+        var section = document.getElementById('followup-section');
+        var buttons = document.getElementById('followup-buttons');
+        var asked = document.getElementById('followup-asked');
+        var loader = document.getElementById('followup-loader');
+        var content = document.getElementById('followup-content');
+        var welcome = document.getElementById('followup-welcome');
+        buttons.innerHTML = '';
+        list.forEach(function (q) {
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'followup-btn';
+            btn.textContent = q;
+            btn.addEventListener('click', function () { askFollowup(q); });
+            buttons.appendChild(btn);
+        });
+        buttons.style.display = '';
+        asked.style.display = 'none';
+        asked.textContent = '';
+        loader.style.display = 'none';
+        content.style.display = 'none';
+        content.innerHTML = '';
+        welcome.style.display = 'none';
+        section.style.display = '';
+    }
+
+    function currentCardLines() {
+        var positions = getPositions();
+        return drawnCards.map(function (dc, i) {
+            return (i + 1) + '. ' + positions[i] + '：' + dc.card.name + '（' + dc.card.en + '）— ' + (dc.reversed ? '逆位' : '正位') + ' — 關鍵詞：' + dc.card.keywords;
+        }).join('\n');
+    }
+
+    function buildFollowupPrompt(question) {
+        var context = '';
+        if (appMode === 'weekly' && selectedZodiac) {
+            context += '占卜類型：本週星座運勢（' + selectedZodiac.name + '）\n';
+            context += '本週日期範圍：' + getWeekRangeString() + '\n';
+        } else if (appMode === 'daily') {
+            context += '占卜類型：今日運程（' + getTodayString() + '）\n';
+        } else {
+            context += '占卜類型：塔羅解讀\n';
+            if (userQuestion) context += '原本的問題：' + userQuestion + '\n';
+        }
+        return (
+            '這是一次塔羅占卜的後續提問。請延續先前解讀的語氣與結論，不要推翻剛才的牌義。\n\n' +
+            context +
+            '牌面：\n' + currentCardLines() + '\n\n' +
+            '先前的解讀：\n' + (lastReadingMarkdown || '（無）') + '\n\n' +
+            '使用者現在追問：' + question + '\n\n' +
+            '請針對這個追問給出補充解讀，使用繁體中文與 Markdown。這是最後一次補充，請不要再建議或寫出其他追問問題。'
+        );
+    }
+
+    function askFollowup(question) {
+        if (followupUsed) return;
+        followupUsed = true;
+
+        var buttons = document.getElementById('followup-buttons');
+        var asked = document.getElementById('followup-asked');
+        var loader = document.getElementById('followup-loader');
+        var content = document.getElementById('followup-content');
+        var welcome = document.getElementById('followup-welcome');
+
+        buttons.style.display = 'none';
+        buttons.querySelectorAll('button').forEach(function (b) { b.disabled = true; });
+        asked.textContent = '「' + question + '」';
+        asked.style.display = '';
+        loader.style.display = '';
+        content.style.display = 'none';
+        content.innerHTML = '';
+        welcome.style.display = 'none';
+
+        var prompt = buildFollowupPrompt(question);
+
+        function revealFollowup(text) {
+            loader.style.display = 'none';
+            var cleaned = extractFollowups(text || '').body;
+            if (!cleaned) {
+                failFollowup('<p style="color:var(--danger);">補充解讀時沒有收到內容，請稍後再試，或重新占卜詢問其他預測。</p>');
+                return;
+            }
+            content.innerHTML = marked.parse(cleaned);
+            content.style.display = '';
+            content.style.opacity = '0';
+            void content.offsetWidth;
+            content.style.transition = 'opacity 0.6s ease';
+            content.style.opacity = '1';
+            welcome.style.display = '';
+        }
+
+        function failFollowup(html) {
+            loader.style.display = 'none';
+            content.style.display = '';
+            content.innerHTML = html;
+            welcome.style.display = '';
+        }
+
+        if (hasLlmApiKey()) {
+            callConfiguredLlm(prompt, function () {}).then(function (text) {
+                revealFollowup(text);
+            }).catch(function (err) {
+                failFollowup('<p style="color:var(--danger);">無法開始補充解讀：' + sanitizeError(err) + '</p>' + settingsHintHtml());
+            });
+        } else if (window.Poe) {
+            window.Poe.registerHandler('followup-handler', function (result) {
+                var msg = result.responses[0];
+                if (!msg) return;
+                if (msg.status === 'error') {
+                    failFollowup('<p style="color:var(--danger);">補充解讀時發生錯誤：' + escapeHtml(msg.statusText || '未知錯誤') + '</p>' + settingsHintHtml());
+                } else if (msg.status === 'complete') {
+                    revealFollowup(msg.content);
+                }
+            });
+            window.Poe.sendUserMessage('@GPT-5.4 ' + prompt, {
+                handler: 'followup-handler',
+                stream: true,
+                openChat: false,
+                parameters: {}
+            }).catch(function (err) {
+                failFollowup('<p style="color:var(--danger);">無法開始補充解讀：' + sanitizeError(err) + '</p>' + settingsHintHtml());
+            });
+        } else {
+            failFollowup('<p style="color:var(--text-dim);">尚未設定 LLM API 金鑰，也沒有載入 Poe API，因此無法進行補充解讀。</p>' + settingsHintHtml());
+        }
+    }
+
+    /* ═══════════════════════════════════════════
+       RESTART
+       ═══════════════════════════════════════════ */
+    function restart() {
+        userQuestion = '';
+        drawnCards = [];
+        appMode = 'tarot';
+        selectedZodiac = null;
+        lastReadingMarkdown = '';
+        followupUsed = false;
+        resetFollowupUi();
+        document.getElementById('question-input').value = '';
+        document.getElementById('num1').value = '';
+        document.getElementById('num2').value = '';
+        document.getElementById('num3').value = '';
+        document.getElementById('question-error').textContent = '';
+        document.getElementById('number-error').textContent = '';
+        document.getElementById('reading-content').innerHTML = '';
+        document.getElementById('reading-content').style.display = 'none';
+        document.getElementById('reading-content').style.opacity = '';
+        document.getElementById('reading-content').style.transition = '';
+        document.getElementById('reading-loader').style.display = 'none';
+        document.getElementById('mini-cards').innerHTML = '';
+        document.getElementById('btn-flip').style.display = 'none';
+        document.getElementById('btn-read').style.display = 'none';
+        document.getElementById('reveal-title').textContent = '你的牌已就位';
+        document.getElementById('reveal-date').textContent = '';
+        document.getElementById('reading-title').innerHTML = '✧ 塔羅解讀 ✧';
+        document.getElementById('reading-date').textContent = '';
+        goToScreen('screen-meditate');
+    }
+
+    </script>
+</body>
+</html>
+
