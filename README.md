@@ -1,4 +1,10 @@
-# Mystery May
+<p align="center">
+  <img src="images/logo.png" width="360" alt="Mystery May — 塔羅占卜">
+</p>
+
+<p align="center">
+  A Traditional Chinese tarot web app that predicts your mind.
+</p>
 
 This web app walks you through a Traditional Chinese tarot reading.
 You sit with a question, draw cards, and receive an AI interpretation
@@ -6,9 +12,13 @@ in Traditional Chinese. After the full reading, the last two paragraphs
 become follow-up questions you can tap for one final supplement. Then
 the app welcomes you to come back and ask about something else.
 
-[![Concept](images/concept.jpg)](images/concept.jpg)
+<p align="center">
+  <img src="images/concept.jpg" alt="Mystery May concept art" width="800">
+</p>
 
-[![Product](images/promo.png)](images/promo.png)
+<p align="center">
+  <img src="images/promo.png" alt="Mystery May product preview" width="800">
+</p>
 
 The app is a single `index.html` file you can open in a browser. An optional
 LLM API key (OpenAI, Anthropic, OpenRouter, or a custom OpenAI-compatible
